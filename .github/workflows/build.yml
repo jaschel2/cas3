@@ -53,7 +53,7 @@ jobs:
     - name: Install fxSDK
       if: steps.cache-toolchain.outputs.cache-hit != 'true'
       run: |
-        git clone https://gitea.planet-casio.com/Lephenixnoir/fxsdk.git
+        git clone https://github.com/Lephenixnoir/fxsdk.git
         cd fxsdk
         sed -i '/udisks2/d' CMakeLists.txt
         sed -i '/SDL2/d'    CMakeLists.txt
@@ -65,7 +65,7 @@ jobs:
 
     - name: Install gint
       run: |
-        git clone https://gitea.planet-casio.com/Lephenixnoir/gint.git
+        git clone https://github.com/Lephenixnoir/gint.git
         cd gint && fxsdk build-cg
 
     - name: Generate icon
