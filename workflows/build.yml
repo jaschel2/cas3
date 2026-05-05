@@ -1,0 +1,77 @@
+name: Build MAT267CAS
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:   # lets you trigger manually from the GitHub website
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # ── 1. grab your code ──────────────────────────────────────────
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # ── 2. install every dependency in one shot ───────────────────
+    - name: Install dependencies
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y \
+          cmake git python3 python3-pip \
+          libpng-dev libusb-1.0-0-dev \
+          pkg-config wget unzip
+
+    # ── 3. build the SH3-EB cross-compiler from a known-good mirror
+    - name: Install sh-elf cross-compiler
+      run: |
+        wget -q https://github.com/Lephenixnoir/sh-elf-gcc/releases/download/v2.0.0/sh-elf-gcc-2.0.0-linux-amd64.tar.gz
+        sudo tar xf sh-elf-gcc-2.0.0-linux-amd64.tar.gz -C /usr/local --strip-components=1
+        echo "/usr/local/bin" >> $GITHUB_PATH
+        sh-elf-gcc --version
+
+    # ── 4. build + install fxSDK (build-only mode, no GUI needed) ─
+    - name: Install fxSDK
+      run: |
+        git clone https://gitea.planet-casio.com/Lephenixnoir/fxsdk.git
+        cd fxsdk
+        # patch out GUI-only dependencies that don't exist on a server
+        sed -i '/udisks2/d' CMakeLists.txt
+        sed -i '/SDL2/d'    CMakeLists.txt
+        sed -i '/ncurses/d' CMakeLists.txt
+        mkdir build && cd build
+        cmake .. \
+          -DCMAKE_INSTALL_PREFIX=/usr/local \
+          -DBUILD_TESTING=OFF
+        make -j$(nproc)
+        sudo make install
+        fxsdk --version
+
+    # ── 5. build + install gint ───────────────────────────────────
+    - name: Install gint
+      run: |
+        git clone https://gitea.planet-casio.com/Lephenixnoir/gint.git
+        cd gint
+        fxsdk build-cg
+        echo "gint installed"
+
+    # ── 6. generate the icon ──────────────────────────────────────
+    - name: Generate icon
+      run: |
+        pip3 install Pillow --break-system-packages
+        python3 gen_icon.py
+
+    # ── 7. build the actual add-in ────────────────────────────────
+    - name: Build MAT267CAS.g3a
+      run: |
+        fxsdk build-cg
+        ls -lh *.g3a
+
+    # ── 8. upload as a downloadable artifact ──────────────────────
+    - name: Upload g3a
+      uses: actions/upload-artifact@v4
+      with:
+        name: MAT267CAS
+        path: MAT267CAS.g3a
+        retention-days: 30
