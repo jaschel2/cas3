@@ -10,20 +10,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
+    - name: Checkout project
       uses: actions/checkout@v4
+      with:
+        path: project
+
+    - name: Checkout fxsdk
+      uses: actions/checkout@v4
+      with:
+        repository: Lephenixnoir/fxsdk
+        path: fxsdk
+
+    - name: Checkout gint
+      uses: actions/checkout@v4
+      with:
+        repository: Lephenixnoir/gint
+        path: gint
 
     - name: Cache cross-compiler
       id: cache-toolchain
       uses: actions/cache@v4
       with:
         path: /usr/local
-        key: sh-elf-toolchain-v1
+        key: sh-elf-toolchain-v2
 
     - name: Install build dependencies
       run: |
         sudo apt-get update -y
-        sudo apt-get install -y cmake git python3 python3-pip \
+        sudo apt-get install -y cmake python3 python3-pip \
           libpng-dev libusb-1.0-0-dev pkg-config \
           flex bison gawk texinfo libgmp-dev \
           libmpfr-dev libmpc-dev libisl-dev
@@ -53,7 +67,6 @@ jobs:
     - name: Install fxSDK
       if: steps.cache-toolchain.outputs.cache-hit != 'true'
       run: |
-        git clone https://github.com/Lephenixnoir/fxsdk.git
         cd fxsdk
         sed -i '/udisks2/d' CMakeLists.txt
         sed -i '/SDL2/d'    CMakeLists.txt
@@ -65,22 +78,21 @@ jobs:
 
     - name: Install gint
       run: |
-        git clone https://github.com/Lephenixnoir/gint.git
         cd gint && fxsdk build-cg
 
     - name: Generate icon
       run: |
         pip3 install Pillow --break-system-packages
-        python3 gen_icon.py
+        cd project && python3 gen_icon.py
 
     - name: Build MAT267CAS.g3a
       run: |
-        fxsdk build-cg
+        cd project && fxsdk build-cg
         ls -lh *.g3a
 
     - name: Upload g3a
       uses: actions/upload-artifact@v4
       with:
         name: MAT267CAS
-        path: MAT267CAS.g3a
+        path: project/MAT267CAS.g3a
         retention-days: 30
