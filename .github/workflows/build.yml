@@ -7,40 +7,13 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+    container:
+      image: lephenixnoir/fxsdk:latest
 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-
-    - name: Install all dependencies
-      run: |
-        sudo apt-get update -y
-        sudo apt-get install -y \
-          cmake git python3 python3-pip \
-          libpng-dev libusb-1.0-0-dev \
-          pkg-config gcc-multilib \
-          binutils-sh-elf gcc-sh-elf
-
-    - name: Verify cross-compiler
-      run: sh-elf-gcc --version
-
-    - name: Install fxSDK
-      run: |
-        git clone https://gitea.planet-casio.com/Lephenixnoir/fxsdk.git
-        cd fxsdk
-        sed -i '/udisks2/d' CMakeLists.txt
-        sed -i '/SDL2/d'    CMakeLists.txt
-        sed -i '/ncurses/d' CMakeLists.txt
-        mkdir build && cd build
-        cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_TESTING=OFF
-        make -j$(nproc)
-        sudo make install
-
-    - name: Install gint
-      run: |
-        git clone https://gitea.planet-casio.com/Lephenixnoir/gint.git
-        cd gint && fxsdk build-cg
 
     - name: Generate icon
       run: |
