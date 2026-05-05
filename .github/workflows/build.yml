@@ -18,13 +18,13 @@ jobs:
     - name: Checkout fxsdk
       uses: actions/checkout@v4
       with:
-        repository: Lephenixnoir/fxsdk
+        repository: Insoft-UK/fxSDK
         path: fxsdk
 
     - name: Checkout gint
       uses: actions/checkout@v4
       with:
-        repository: Lephenixnoir/gint
+        repository: Insoft-UK/gint
         path: gint
 
     - name: Cache cross-compiler
